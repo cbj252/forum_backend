@@ -57,10 +57,9 @@ exports.login_post = function (req, res) {
 };
 
 exports.user_current_get = function (req, res) {
-  User.findbyId(req.params.id).exec(function (err, result) {
-    ifErr(err);
+  User.findById(res.locals.currentUser_id).exec(function (err, result) {
     if (result == null) {
-      ifErr("User not found.");
+      ifErr(err);
     } else {
       res.json(result);
     }
@@ -83,7 +82,7 @@ exports.admin_make_post = function (req, res) {
 
 exports.admin_remove_post = function (req, res) {
   const authLevel = userAuthLevel(res.locals.currentUser_id);
-  if (authLevel != "user" && authLevel != "administrator") {
+  if (authLevel == "owner") {
     User.findByIdAndUpdate(
       req.params.id,
       { type: "user" },
