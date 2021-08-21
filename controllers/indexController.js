@@ -60,7 +60,6 @@ exports.posts_post = function (req, res) {
 };
 
 exports.posts_edit_post = function (req, res) {
-  validPost(req, res);
   Post.findById(req.params.id, function (err, result) {
     ifErr(err);
     if (result.author._id == res.locals.currentUser_id) {
@@ -79,7 +78,6 @@ exports.posts_edit_post = function (req, res) {
 };
 
 exports.posts_delete_post = function (req, res) {
-  validPost(req, res);
   const authLevel = userAuthLevel(res.locals.currentUser_id);
   if (authLevel == "user") {
     res.sendStatus(403);
