@@ -1,4 +1,9 @@
-const { ifErr, validThread, validPost } = require("./helperFunc.js");
+const {
+  ifErr,
+  validThread,
+  validPost,
+  userAuthLevel,
+} = require("./helperFunc.js");
 
 var debug = require("debug")("indexController");
 
@@ -52,4 +57,36 @@ exports.posts_post = function (req, res) {
     ifErr(err);
     res.json("Post made." + result);
   });
+};
+
+exports.posts_edit_post = function (req, res) {
+  validPost(req, res);
+  Post.findById(req.params.id, function (err, result) {
+    ifErr(err);
+    if (result.author._id == res.locals.currentUser_id) {
+      Post.findByIdAndUpdate(
+        req.params.id,
+        { content: req.body.content },
+        function (err, result) {
+          ifErr(err);
+          res.json("Post updated" + result);
+        }
+      );
+    } else {
+      res.sendStatus(403);
+    }
+  });
+};
+
+exports.posts_delete_post = function (req, res) {
+  validPost(req, res);
+  const authLevel = userAuthLevel(res.locals.currentUser_id);
+  if (authLevel == "user") {
+    res.sendStatus(403);
+  } else {
+    Post.findByIdAndDelete(req.params.id, function (err, result) {
+      ifErr(err);
+      res.json("Post deleted" + result);
+    });
+  }
 };
