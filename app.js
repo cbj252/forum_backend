@@ -28,8 +28,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Allows ALL requests - change later when frontend site website is known.
-app.use(cors());
+var corsOptions = {
+  origin: "https://cbj252.github.io",
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(compression());
 app.use(helmet());
 
