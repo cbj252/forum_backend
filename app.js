@@ -29,7 +29,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 var corsOptions = {
-  origin: "https://cbj252.github.io",
+  origin: "https://forum-frontend-252.herokuapp.com",
   optionsSuccessStatus: 200,
 };
 
