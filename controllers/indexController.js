@@ -78,13 +78,19 @@ exports.posts_edit_post = function (req, res) {
 };
 
 exports.posts_delete_post = function (req, res) {
-  const authLevel = userAuthLevel(res.locals.currentUser_id);
-  if (authLevel == "user") {
-    res.sendStatus(403);
-  } else {
-    Post.findByIdAndDelete(req.params.id, function (err, result) {
-      ifErr(err);
-      res.json("Post deleted" + result);
-    });
-  }
+  User.findById(res.locals.currentUser_id).exec(function (err, currentUser) {
+    ifErr(err);
+    if (currentUser.type === null) {
+      return ifErr("User not found.");
+    } else {
+      if (currentUser.type === "user") {
+        res.sendStatus(403);
+      } else {
+        Post.findByIdAndDelete(req.params.id, function (err, result) {
+          ifErr(err);
+          res.json("Post deleted" + result);
+        });
+      }
+    }
+  });
 };

@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { ifErr, userAuthLevel } = require("./helperFunc.js");
+const { ifErr } = require("./helperFunc.js");
 
 const User = require("../models/user");
 
@@ -67,31 +67,43 @@ exports.user_current_get = function (req, res) {
 };
 
 exports.admin_make_post = function (req, res) {
-  const authLevel = userAuthLevel(res.locals.currentUser_id);
-  if (authLevel != "user") {
-    User.findByIdAndUpdate(
-      req.params.id,
-      { type: "administrator" },
-      function (err, result) {
-        ifErr(err);
-        res.json("Admin created." + result);
+  User.findById(res.locals.currentUser_id).exec(function (err, currentUser) {
+    ifErr(err);
+    if (currentUser.type === null) {
+      return ifErr("User not found.");
+    } else {
+      if (currentUser.type != "user") {
+        User.findByIdAndUpdate(
+          req.params.id,
+          { type: "administrator" },
+          function (err, result) {
+            ifErr(err);
+            res.json("Admin created." + result);
+          }
+        );
       }
-    );
-  }
+    }
+  });
 };
 
 exports.admin_remove_post = function (req, res) {
-  const authLevel = userAuthLevel(res.locals.currentUser_id);
-  if (authLevel == "owner") {
-    User.findByIdAndUpdate(
-      req.params.id,
-      { type: "user" },
-      function (err, result) {
-        ifErr(err);
-        res.json("Admin status removed." + result);
+  User.findById(res.locals.currentUser_id).exec(function (err, currentUser) {
+    ifErr(err);
+    if (currentUser.type === null) {
+      return ifErr("User not found.");
+    } else {
+      if (currentUser.type == "owner") {
+        User.findByIdAndUpdate(
+          req.params.id,
+          { type: "user" },
+          function (err, result) {
+            ifErr(err);
+            res.json("Admin status removed." + result);
+          }
+        );
       }
-    );
-  }
+    }
+  });
 };
 
 // Logout is done via frontend.

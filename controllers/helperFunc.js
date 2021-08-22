@@ -35,15 +35,4 @@ const validPost = function (req, res, next) {
     };
 };
 
-const userAuthLevel = function (userId) {
-  User.findById(userId).exec(function (err, result) {
-    ifErr(err);
-    if (result == null) {
-      return ifErr("User not found.");
-    } else {
-      return result.type;
-    }
-  });
-};
-
-module.exports = { ifErr, validThread, validPost, userAuthLevel };
+module.exports = { ifErr, validThread, validPost };
