@@ -76,11 +76,14 @@ exports.admin_make_post = function (req, res) {
         User.findByIdAndUpdate(
           req.params.id,
           { type: "administrator" },
+          { new: true },
           function (err, result) {
             ifErr(err);
-            res.json("Admin created." + result);
+            res.json("Admin created " + result.type);
           }
         );
+      } else {
+        res.sendStatus(403);
       }
     }
   });
@@ -96,11 +99,14 @@ exports.admin_remove_post = function (req, res) {
         User.findByIdAndUpdate(
           req.params.id,
           { type: "user" },
+          { new: true },
           function (err, result) {
             ifErr(err);
-            res.json("Admin status removed." + result);
+            res.json("Admin removed " + result.type);
           }
         );
+      } else {
+        res.sendStatus(403);
       }
     }
   });

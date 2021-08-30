@@ -30,7 +30,7 @@ exports.threads_post = function (req, res) {
 
   newThread.save(function (err, result) {
     ifErr(err);
-    res.json("Thread made." + result);
+    res.json(result._id);
   });
 };
 
@@ -55,32 +55,37 @@ exports.posts_post = function (req, res) {
 
   newPost.save(function (err, result) {
     ifErr(err);
-    res.json("Post made." + result);
+    res.json(result._id);
   });
 };
 
 exports.posts_edit_post = function (req, res) {
   Post.findById(req.params.id, function (err, result) {
     ifErr(err);
-    if (result.author._id == res.locals.currentUser_id) {
-      Post.findByIdAndUpdate(
-        req.params.id,
-        { content: req.body.content },
-        function (err, result) {
-          ifErr(err);
-          res.json("Post updated" + result);
-        }
-      );
+    if (result === null) {
+      return ifErr("Post not found.");
     } else {
-      res.sendStatus(403);
+      if (result.author._id == res.locals.currentUser_id) {
+        Post.findByIdAndUpdate(
+          req.params.id,
+          { content: req.body.content },
+          { new: true },
+          function (err, result) {
+            ifErr(err);
+            res.json("Post updated\n" + req.body.content);
+          }
+        );
+      } else {
+        res.sendStatus(403);
+      }
     }
-  });
+  })
 };
 
 exports.posts_delete_post = function (req, res) {
   User.findById(res.locals.currentUser_id).exec(function (err, currentUser) {
     ifErr(err);
-    if (currentUser.type === null) {
+    if (currentUser === null) {
       return ifErr("User not found.");
     } else {
       if (currentUser.type === "user") {
@@ -88,7 +93,7 @@ exports.posts_delete_post = function (req, res) {
       } else {
         Post.findByIdAndDelete(req.params.id, function (err, result) {
           ifErr(err);
-          res.json("Post deleted" + result);
+          res.json("Post deleted");
         });
       }
     }

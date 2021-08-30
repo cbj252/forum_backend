@@ -5,6 +5,7 @@ const User = require("../models/user");
 
 const ifErr = function ifErr(err) {
   if (err) {
+    console.log(err);
     res.json(err);
   }
 };
