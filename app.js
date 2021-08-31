@@ -28,8 +28,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+var whitelist = [
+  "https://forum-frontend-252.herokuapp.com",
+  "http://localhost:3000",
+];
 var corsOptions = {
-  origin: "https://forum-frontend-252.herokuapp.com",
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   optionsSuccessStatus: 200,
 };
 
