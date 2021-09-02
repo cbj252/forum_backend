@@ -35,10 +35,10 @@ app.use(function (err, req, res, next) {
   res.json(err.message);
 });
 
-const request = require('supertest');
+const request = require("supertest");
 
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require("mongoose");
+const { MongoMemoryServer } = require("mongodb-memory-server");
 let mongoServer;
 
 const User = require("../models/user");
@@ -47,11 +47,19 @@ const Post = require("../models/post");
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
-  mongoose.connect(mongoServer.getUri(), { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false});
+  mongoose.connect(mongoServer.getUri(), {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  });
 });
 
 beforeEach(async () => {
-  await Promise.all([User.deleteMany({}), Thread.deleteMany({}), Post.deleteMany({})]);
+  await Promise.all([
+    User.deleteMany({}),
+    Thread.deleteMany({}),
+    Post.deleteMany({}),
+  ]);
 });
 
 afterAll(async () => {
@@ -60,19 +68,25 @@ afterAll(async () => {
 });
 
 test("Index Routes need auth", async () => {
-  const noAuth = await request(app).get("/threads")
+  const noAuth = await request(app).get("/threads");
   expect(noAuth.body).toBe("No authentication included in Request.");
 });
 
 test("GET/POST /threads", async () => {
   const [userId, adminId, ownerId] = await populateData();
   const authTokenUser = await login(app, "test_user");
-  const makeThread = await request(app).post("/threads").set({ authorization: authTokenUser }).send({
-    title: "Test Thread",
-  });
+  const makeThread = await request(app)
+    .post("/threads")
+    .set({ authorization: authTokenUser })
+    .send({
+      title: "Test Thread",
+    });
   expect(makeThread.body.length).toBe(24);
-  const getThread = await request(app).get("/threads").set({ authorization: authTokenUser });
-  expect(getThread.body[0]).toEqual(expect.objectContaining({
+  const getThread = await request(app)
+    .get("/threads")
+    .set({ authorization: authTokenUser });
+  expect(getThread.body[0]).toEqual(
+    expect.objectContaining({
       _id: expect.anything(),
       title: "Test Thread",
       time: expect.anything(),
@@ -83,16 +97,25 @@ test("GET/POST /threads", async () => {
 test("GET/POST /threads/:id", async () => {
   const [userId, adminId, ownerId] = await populateData();
   const authTokenUser = await login(app, "test_user");
-  const makeThread = await request(app).post("/threads").set({ authorization: authTokenUser }).send({
-    title: "Test Thread",
-  });
+  const makeThread = await request(app)
+    .post("/threads")
+    .set({ authorization: authTokenUser })
+    .send({
+      title: "Test Thread",
+    });
   expect(makeThread.body.length).toBe(24);
-  const makePost = await request(app).post(`/threads/${makeThread.body}`).set({ authorization: authTokenUser }).send({
-    content: "Test Post",
-  });
+  const makePost = await request(app)
+    .post(`/threads/${makeThread.body}`)
+    .set({ authorization: authTokenUser })
+    .send({
+      content: "Test Post",
+    });
   expect(makePost.body.length).toBe(24);
-  const getPost = await request(app).get(`/threads/${makeThread.body}`).set({ authorization: authTokenUser });
-  expect(getPost.body[0]).toEqual(expect.objectContaining({
+  const getPost = await request(app)
+    .get(`/threads/${makeThread.body}`)
+    .set({ authorization: authTokenUser });
+  expect(getPost.body[0]).toEqual(
+    expect.objectContaining({
       _id: expect.anything(),
       content: "Test Post",
       time: expect.anything(),
@@ -102,26 +125,52 @@ test("GET/POST /threads/:id", async () => {
 
 test("POST /threads/:id/edit", async () => {
   const postId = await makePost(app);
-  const authTokenUser = await login(app, "test_user");
-  const authTokenOwner = await login(app, "test_owner");
-  const notUser = await request(app).post(`/threads/${postId}/edit`).set({ authorization: authTokenOwner }).send({
-    content: "Edited",
-  });
-  expect(notUser.statusCode).toBe(403);
-  const editPost = await request(app).post(`/threads/${postId}/edit`).set({ authorization: authTokenUser }).send({
-  content: "Edited",
-  });
-  expect(editPost.body).toBe("Post updated\nEdited");
+  const [authTokenUser, authTokenOwner] = await Promise.all([
+    login(app, "test_user"),
+    login(app, "test_owner"),
+  ]);
+  const notUser = request(app)
+    .post(`/threads/${postId}/edit`)
+    .set({ authorization: authTokenOwner })
+    .send({
+      content: "Edited",
+    });
+
+  const editPost = request(app)
+    .post(`/threads/${postId}/edit`)
+    .set({ authorization: authTokenUser })
+    .send({
+      content: "Edited",
+    });
+
+  const [notUserResult, editPostResult] = await Promise.all([
+    notUser,
+    editPost,
+  ]);
+
+  expect(notUserResult.statusCode).toBe(403);
+  expect(editPostResult.body).toBe("Post updated\nEdited");
 });
 
 test("POST /threads/:id/delete", async () => {
   const postId = await makePost(app);
-  const authTokenUser = await login(app, "test_user");
-  const authTokenOwner = await login(app, "test_owner");
-  const noAuth = await request(app).post(`/threads/${postId}/delete`).set({ authorization: authTokenUser });
-  expect(noAuth.statusCode).toBe(403);
-  const editPost = await request(app).post(`/threads/${postId}/delete`).set({ authorization: authTokenOwner });
-  expect(editPost.body).toBe("Post deleted");
+  const [authTokenUser, authTokenOwner] = await Promise.all([
+    login(app, "test_user"),
+    login(app, "test_owner"),
+  ]);
+  const noAuth = await request(app)
+    .post(`/threads/${postId}/delete`)
+    .set({ authorization: authTokenUser });
+
+  const editPost = await request(app)
+    .post(`/threads/${postId}/delete`)
+    .set({ authorization: authTokenOwner });
+
+  const [noAuthResult, editPostResult] = await Promise.all([noAuth, editPost]);
+
+  expect(noAuthResult.statusCode).toBe(403);
+  expect(editPostResult.body).toBe("Post deleted");
+
   const check = await Post.find({});
   expect(check).toEqual([]);
 });

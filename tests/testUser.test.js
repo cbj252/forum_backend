@@ -35,10 +35,10 @@ app.use(function (err, req, res, next) {
   res.json(err.message);
 });
 
-const request = require('supertest');
+const request = require("supertest");
 
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require("mongoose");
+const { MongoMemoryServer } = require("mongodb-memory-server");
 let mongoServer;
 
 const User = require("../models/user");
@@ -47,11 +47,19 @@ const Post = require("../models/post");
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
-  mongoose.connect(mongoServer.getUri(), { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false});
+  mongoose.connect(mongoServer.getUri(), {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  });
 });
 
 beforeEach(async () => {
-  await Promise.all([User.deleteMany({}), Thread.deleteMany({}), Post.deleteMany({})]);
+  await Promise.all([
+    User.deleteMany({}),
+    Thread.deleteMany({}),
+    Post.deleteMany({}),
+  ]);
 });
 
 afterAll(async () => {
@@ -62,9 +70,9 @@ afterAll(async () => {
 test("POST /user/login succeeds", async () => {
   const makeUser = await request(app).post("/user/signup").send({
     username: "test_user",
-    password: "password"
+    password: "password",
   });
-  expect(makeUser.body).toBe("User created")
+  expect(makeUser.body).toBe("User created");
 
   const loginResult = await login(app, "test_user");
   expect(loginResult).toBeDefined();
@@ -72,49 +80,69 @@ test("POST /user/login succeeds", async () => {
 
 test("POST /user/login fails if putting invalid credentials", async () => {
   const loginResult = await login(app, "test_user");
-  expect(loginResult).toBe("Incorrect username.")
+  expect(loginResult).toBe("Incorrect username.");
 });
 
 test("GET /user/current", async () => {
   await populateData();
 
   const authToken = await login(app, "test_user");
-  expect(authToken.split(" ")[0]).toBe("Bearer")
-  const getCurrent = await request(app).get("/user/current").set({ authorization: authToken })
-  expect(getCurrent.body).toEqual(expect.objectContaining({
+  expect(authToken.split(" ")[0]).toBe("Bearer");
+  const getCurrent = await request(app)
+    .get("/user/current")
+    .set({ authorization: authToken });
+  expect(getCurrent.body).toEqual(
+    expect.objectContaining({
       _id: expect.anything(),
       username: "test_user",
       password: expect.not.stringContaining("password"),
       type: "user",
-    }));
+    })
+  );
 
   const authTokenAdmin = await login(app, "test_admin");
-  expect(authTokenAdmin.split(" ")[0]).toBe("Bearer")
-  const getAdmin = await request(app).get("/user/current").set({ authorization: authTokenAdmin })
-  expect(getAdmin.body).toEqual(expect.objectContaining({
+  expect(authTokenAdmin.split(" ")[0]).toBe("Bearer");
+  const getAdmin = await request(app)
+    .get("/user/current")
+    .set({ authorization: authTokenAdmin });
+  expect(getAdmin.body).toEqual(
+    expect.objectContaining({
       _id: expect.anything(),
       username: "test_admin",
       password: expect.not.stringContaining("password"),
       type: "admin",
-    }));
+    })
+  );
 });
 
 test("POST /user/admin/:id/make", async () => {
   const [userId, adminId, ownerId] = await populateData();
-  const authTokenUser = await login(app, "test_user");
-  const authTokenAdmin = await login(app, "test_admin");
-  const noAuth = await request(app).post(`/user/admin/${userId}/make`).set({ authorization: authTokenUser })
+  const [authTokenUser, authTokenAdmin] = await Promise.all([
+    login(app, "test_user"),
+    login(app, "test_admin"),
+  ]);
+  const noAuth = await request(app)
+    .post(`/user/admin/${userId}/make`)
+    .set({ authorization: authTokenUser });
   expect(noAuth.statusCode).toBe(403);
-  const getAdmin = await request(app).post(`/user/admin/${userId}/make`).set({ authorization: authTokenAdmin })
+  const getAdmin = await request(app)
+    .post(`/user/admin/${userId}/make`)
+    .set({ authorization: authTokenAdmin });
   expect(getAdmin.body).toBe("Admin created administrator");
 });
 
 test("POST /user/admin/:id/remove", async () => {
   const [userId, adminId, ownerId] = await populateData();
-  const authTokenAdmin = await login(app, "test_admin");
-  const authTokenOwner = await login(app, "test_owner");
-  const noAuth = await request(app).post(`/user/admin/${adminId}/remove`).set({ authorization: authTokenAdmin })
+  const [authTokenAdmin, authTokenOwner] = await Promise.all([
+    login(app, "test_admin"),
+    login(app, "test_owner"),
+  ]);
+  const noAuth = await request(app)
+    .post(`/user/admin/${adminId}/remove`)
+    .set({ authorization: authTokenAdmin });
   expect(noAuth.statusCode).toBe(403);
-  const getAdmin = await request(app).post(`/user/admin/${adminId}/remove`).set({ authorization: authTokenOwner })
+  const getAdmin = await request(app)
+    .post(`/user/admin/${adminId}/remove`)
+    .set({ authorization: authTokenOwner });
   expect(getAdmin.body).toBe("Admin removed user");
 });
