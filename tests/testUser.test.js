@@ -50,7 +50,6 @@ beforeAll(async () => {
   mongoose.connect(mongoServer.getUri(), {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useFindAndModify: false,
   });
 });
 
