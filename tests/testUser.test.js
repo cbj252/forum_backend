@@ -1,4 +1,4 @@
-const { login, populateData, makePost } = require("./helper");
+const { login, populateUsers } = require("./helper");
 
 var createError = require("http-errors");
 var express = require("express");
@@ -83,7 +83,7 @@ test("POST /user/login fails if putting invalid credentials", async () => {
 });
 
 test("GET /user/current", async () => {
-  await populateData();
+  await populateUsers();
 
   const authToken = await login(app, "test_user");
   expect(authToken.split(" ")[0]).toBe("Bearer");
@@ -115,7 +115,7 @@ test("GET /user/current", async () => {
 });
 
 test("POST /user/admin/:id/make", async () => {
-  const [userId, adminId, ownerId] = await populateData();
+  const [userId, adminId, ownerId] = await populateUsers();
   const [authTokenUser, authTokenAdmin] = await Promise.all([
     login(app, "test_user"),
     login(app, "test_admin"),
@@ -131,7 +131,7 @@ test("POST /user/admin/:id/make", async () => {
 });
 
 test("POST /user/admin/:id/remove", async () => {
-  const [userId, adminId, ownerId] = await populateData();
+  const [userId, adminId, ownerId] = await populateUsers();
   const [authTokenAdmin, authTokenOwner] = await Promise.all([
     login(app, "test_admin"),
     login(app, "test_owner"),

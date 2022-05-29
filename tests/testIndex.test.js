@@ -1,4 +1,4 @@
-const { login, populateData, makePost } = require("./helper");
+const { login, populateUsers, makeThread, makePost } = require("./helper");
 
 var createError = require("http-errors");
 var express = require("express");
@@ -44,6 +44,7 @@ let mongoServer;
 const User = require("../models/user");
 const Thread = require("../models/thread");
 const Post = require("../models/post");
+const thread = require("../models/thread");
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -51,14 +52,11 @@ beforeAll(async () => {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
+  await populateUsers();
 });
 
 beforeEach(async () => {
-  await Promise.all([
-    User.deleteMany({}),
-    Thread.deleteMany({}),
-    Post.deleteMany({}),
-  ]);
+  await Promise.all([Thread.deleteMany({}), Post.deleteMany({})]);
 });
 
 afterAll(async () => {
@@ -72,15 +70,10 @@ test("Index Routes need auth", async () => {
 });
 
 test("GET/POST /threads", async () => {
-  const [userId, adminId, ownerId] = await populateData();
   const authTokenUser = await login(app, "test_user");
-  const makeThread = await request(app)
-    .post("/threads")
-    .set({ authorization: authTokenUser })
-    .send({
-      title: "Test Thread",
-    });
-  expect(makeThread.body.length).toBe(24);
+  const threadId = await makeThread(app);
+  // 24 is the amount of characters in IDs.
+  expect(threadId.length).toBe(24);
   const getThread = await request(app)
     .get("/threads")
     .set({ authorization: authTokenUser });
@@ -94,24 +87,12 @@ test("GET/POST /threads", async () => {
 });
 
 test("GET/POST /threads/:id", async () => {
-  const [userId, adminId, ownerId] = await populateData();
   const authTokenUser = await login(app, "test_user");
-  const makeThread = await request(app)
-    .post("/threads")
-    .set({ authorization: authTokenUser })
-    .send({
-      title: "Test Thread",
-    });
-  expect(makeThread.body.length).toBe(24);
-  const makePost = await request(app)
-    .post(`/threads/${makeThread.body}`)
-    .set({ authorization: authTokenUser })
-    .send({
-      content: "Test Post",
-    });
-  expect(makePost.body.length).toBe(24);
+  const threadId = await makeThread(app);
+  const postId = await makePost(app, threadId);
+  expect(postId.length).toBe(24);
   const getPost = await request(app)
-    .get(`/threads/${makeThread.body}`)
+    .get(`/threads/${threadId}`)
     .set({ authorization: authTokenUser });
   expect(getPost.body[0]).toEqual(
     expect.objectContaining({
@@ -122,12 +103,24 @@ test("GET/POST /threads/:id", async () => {
   );
 });
 
+test("GET /threads/:id/count", async () => {
+  const authTokenUser = await login(app, "test_user");
+  const threadId = await makeThread(app);
+  const postId = await makePost(app, threadId);
+  const postCount = await request(app)
+    .get(`/threads/${threadId}/count`)
+    .set({ authorization: authTokenUser });
+  expect(postCount.body).toEqual(1);
+});
+
 test("POST /threads/:id/edit", async () => {
-  const postId = await makePost(app);
+  const threadId = await makeThread(app);
+  const postId = await makePost(app, threadId);
   const [authTokenUser, authTokenOwner] = await Promise.all([
     login(app, "test_user"),
     login(app, "test_owner"),
   ]);
+
   const notUser = request(app)
     .post(`/threads/${postId}/edit`)
     .set({ authorization: authTokenOwner })
@@ -152,7 +145,8 @@ test("POST /threads/:id/edit", async () => {
 });
 
 test("POST /threads/:id/delete", async () => {
-  const postId = await makePost(app);
+  const threadId = await makeThread(app);
+  const postId = await makePost(app, threadId);
   const [authTokenUser, authTokenOwner] = await Promise.all([
     login(app, "test_user"),
     login(app, "test_owner"),

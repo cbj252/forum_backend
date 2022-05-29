@@ -35,13 +35,31 @@ exports.threads_post = function (req, res) {
 };
 
 exports.posts_get = function (req, res) {
+  const startPost = 0;
+  if (req.query.start) {
+    if (req.query.start.type === Number) {
+      startPost = req.query.start;
+    }
+  }
   Post.find({ thread: req.params.id })
+    .skip(startPost)
+    .limit(25)
     .populate("author")
     .populate("thread")
     .exec(function (err, result) {
       ifErr(err);
       res.json(result);
     });
+};
+
+exports.postCount_get = function (req, res) {
+  Post.estimatedDocumentCount({ thread: req.params.id }).exec(function (
+    err,
+    result
+  ) {
+    ifErr(err);
+    res.json(result);
+  });
 };
 
 exports.posts_post = function (req, res) {
@@ -79,7 +97,7 @@ exports.posts_edit_post = function (req, res) {
         res.sendStatus(403);
       }
     }
-  })
+  });
 };
 
 exports.posts_delete_post = function (req, res) {

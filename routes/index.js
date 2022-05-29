@@ -23,6 +23,7 @@ router.use(function (req, res, next) {
 router.get("/threads", indexController.threads_get);
 router.post("/threads", indexController.threads_post);
 router.get("/threads/:id", indexController.posts_get);
+router.get("/threads/:id/count", indexController.postCount_get);
 router.post("/threads/:id", indexController.posts_post);
 router.post("/threads/:id/edit", indexController.posts_edit_post);
 router.post("/threads/:id/delete", indexController.posts_delete_post);
