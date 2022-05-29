@@ -35,11 +35,9 @@ exports.threads_post = function (req, res) {
 };
 
 exports.posts_get = function (req, res) {
-  const startPost = 0;
-  if (req.query.start) {
-    if (req.query.start.type === Number) {
-      startPost = req.query.start;
-    }
+  let startPost = 0;
+  if (!isNaN(req.query.start)) {
+    startPost = Number(req.query.start);
   }
   Post.find({ thread: req.params.id })
     .skip(startPost)

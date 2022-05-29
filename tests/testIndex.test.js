@@ -101,16 +101,26 @@ test("GET/POST /threads/:id", async () => {
       time: expect.anything(),
     })
   );
+  for (let i = 0; i < 30; i++) {
+    await makePost(app, threadId);
+  }
+  const getThreadCutoff = await request(app)
+    .get(`/threads/${threadId}?start=25`)
+    .set({ authorization: authTokenUser });
+  // Posts 26,27,28,30 and 31.
+  expect(getThreadCutoff.body.length).toEqual(6);
 });
 
 test("GET /threads/:id/count", async () => {
   const authTokenUser = await login(app, "test_user");
   const threadId = await makeThread(app);
-  const postId = await makePost(app, threadId);
+  for (let i = 0; i < 2; i++) {
+    await makePost(app, threadId);
+  }
   const postCount = await request(app)
     .get(`/threads/${threadId}/count`)
     .set({ authorization: authTokenUser });
-  expect(postCount.body).toEqual(1);
+  expect(postCount.body).toEqual(2);
 });
 
 test("POST /threads/:id/edit", async () => {
