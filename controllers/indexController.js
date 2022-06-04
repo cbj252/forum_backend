@@ -41,7 +41,7 @@ exports.posts_get = function (req, res) {
   }
   Post.find({ thread: req.params.id })
     .skip(startPost)
-    .limit(25)
+    .limit(10)
     .populate("author")
     .populate("thread")
     .exec(function (err, result) {
