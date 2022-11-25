@@ -30,6 +30,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 var whitelist = [
   "https://forum-frontend-252.herokuapp.com",
+  "https://forum-frontend.onrender.com",
   "http://localhost:3000",
 ];
 var corsOptions = {
