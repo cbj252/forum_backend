@@ -51,10 +51,8 @@ exports.posts_get = function (req, res) {
 };
 
 exports.postCount_get = function (req, res) {
-  Post.estimatedDocumentCount({ thread: req.params.id }).exec(function (
-    err,
-    result
-  ) {
+  console.log(req.params.id);
+  Post.countDocuments({ thread: req.params.id }).exec(function (err, result) {
     ifErr(err);
     res.json(result);
   });
